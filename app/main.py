@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 
 from app.config import settings
 from app.routes import router
@@ -10,6 +10,39 @@ app = FastAPI(
     version=settings.app_version,
     description="FastAPI backend for video upload and matching.",
 )
+
+
+@app.get("/")
+async def root() -> dict:
+    return {"status": "ok"}
+
+
+@app.get("/upload-page", response_class=HTMLResponse)
+async def upload_page() -> HTMLResponse:
+    return HTMLResponse(
+        content="""
+        <!doctype html>
+        <html lang=\"en\">
+        <head>
+            <meta charset=\"utf-8\">
+            <title>Video Upload</title>
+            <style>
+                body { font-family: Arial, sans-serif; max-width: 640px; margin: 40px auto; }
+                form { display: grid; gap: 12px; }
+                input, button { padding: 10px; font-size: 16px; }
+            </style>
+        </head>
+        <body>
+            <h1>Upload videos</h1>
+            <form action=\"/upload\" method=\"post\" enctype=\"multipart/form-data\">
+                <input type=\"file\" name=\"files\" multiple required>
+                <button type=\"submit\">Upload</button>
+            </form>
+        </body>
+        </html>
+        """,
+        status_code=200,
+    )
 
 
 @app.exception_handler(RequestValidationError)

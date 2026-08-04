@@ -23,11 +23,6 @@ router = APIRouter(tags=["assessment"])
 matcher = VideoMatcher(upload_dir=settings.upload_dir)
 
 
-@router.get("/")
-async def root() -> dict:
-    return {"status": "ok"}
-
-
 @router.get("/health")
 async def health_check() -> dict:
     return {"status": "ok"}

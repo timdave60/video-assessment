@@ -26,3 +26,10 @@ def test_root_path_returns_welcome_payload() -> None:
     response = client.get("/")
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
+
+
+def test_upload_page_renders_browser_form() -> None:
+    response = client.get("/upload-page")
+    assert response.status_code == 200
+    assert "multipart/form-data" in response.text
+    assert "/upload" in response.text
