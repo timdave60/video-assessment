@@ -20,3 +20,9 @@ def test_list_videos_empty_initially() -> None:
 def test_invalid_ratio_filter_returns_400() -> None:
     response = client.get("/videos?ratio=invalid")
     assert response.status_code == 400
+
+
+def test_root_path_returns_welcome_payload() -> None:
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.json()["status"] == "ok"
