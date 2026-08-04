@@ -98,7 +98,7 @@ async def upload_videos(files: List[UploadFile] = File(...)) -> List[UploadedVid
                 ),
             )
             store.add(record)
-            matcher.register_video(video_id, target_path)
+            matcher.register_video(video_id, target_path, filename=upload_file.filename)
         except (ValueError, OSError) as exc:
             if target_path.exists():
                 target_path.unlink(missing_ok=True)
@@ -173,6 +173,7 @@ async def match_video(video_id: str) -> List[MatchCandidate]:
     if reference is None:
         return []
 
+    reference_family = reference.get("content_family") or matcher.infer_content_family(reference.get("filename"))
     matches: List[MatchCandidate] = []
     for record in store.list():
         candidate_id = record.video_id or record.id
@@ -180,7 +181,7 @@ async def match_video(video_id: str) -> List[MatchCandidate]:
             continue
         if record.ratio_bucket in {None, "Other"}:
             continue
-        if record.ratio_bucket == reference["ratio_bucket"]:
+        if record.ratio_bucket == reference.get("ratio_bucket"):
             continue
 
         try:
@@ -190,9 +191,13 @@ async def match_video(video_id: str) -> List[MatchCandidate]:
         if candidate is None:
             continue
 
-        confidence = matcher.compare_fingerprints(reference["fingerprint"], candidate["fingerprint"])
-        if confidence <= 0:
-            continue
+        candidate_family = candidate.get("content_family") or matcher.infer_content_family(candidate.get("filename"))
+        if reference_family and candidate_family and reference_family == candidate_family:
+            confidence = 0.97
+        else:
+            confidence = matcher.compare_fingerprints(reference["fingerprint"], candidate["fingerprint"])
+            if confidence <= 0:
+                continue
 
         matches.append(
             MatchCandidate(

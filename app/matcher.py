@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from threading import RLock
 from typing import Any, Dict, Optional
@@ -57,11 +58,13 @@ class VideoMatcher:
             "candidate_video_id": candidate_video_id,
         }
 
-    def register_video(self, video_id: str, video_path: str | Path) -> Dict[str, Any]:
+    def register_video(self, video_id: str, video_path: str | Path, filename: Optional[str] = None) -> Dict[str, Any]:
         fingerprint = self._build_fingerprint(video_path)
         record = {
             "video_id": video_id,
             "video_path": str(video_path),
+            "filename": filename or Path(video_path).name,
+            "content_family": self.infer_content_family(filename or Path(video_path).name),
             **fingerprint,
         }
         with self._lock:
@@ -180,6 +183,16 @@ class VideoMatcher:
 
         distance = sum(1 for a, b in zip(left, right) if a != b)
         return max(0.0, 1.0 - (distance / len(left)))
+
+    def infer_content_family(self, filename: Optional[str]) -> Optional[str]:
+        if not filename:
+            return None
+
+        stem = Path(filename).stem
+        cleaned = re.sub(r"(?i)(?:^|_)(?:as)?[_-]?\d+(?:[:._-]\d+)+$", "", stem)
+        cleaned = re.sub(r"(?i)(?:^|_)(?:as)?[_-]?\d+$", "", cleaned)
+        cleaned = cleaned.strip("._-")
+        return cleaned.lower() or None
 
     def _get_ratio_bucket(self, width: int, height: int) -> str:
         if width <= 0 or height <= 0:
