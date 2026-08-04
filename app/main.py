@@ -81,17 +81,34 @@ async def upload_page() -> HTMLResponse:
                 });
 
                 async function findMatches(videoId, button) {
+                    const card = button.closest('.card');
+                    const matchContainer = card ? card.querySelector('.match-results') : null;
+                    if (!matchContainer) {
+                        return;
+                    }
+
                     button.disabled = true;
                     button.innerHTML = '<span class=\"spinner\"></span>Finding matches...';
-                    const matchContainer = button.parentElement.querySelector('.match-results');
                     matchContainer.innerHTML = '';
+
+                    const controller = new AbortController();
+                    const timeoutId = window.setTimeout(() => controller.abort(), 20000);
+
                     try {
-                        const response = await fetch(`/match?video_id=${encodeURIComponent(videoId)}`);
-                        const payload = await response.json();
-                        if (!response.ok) {
-                            throw new Error(payload.detail || 'Unable to load matches.');
+                        const response = await fetch(`/match?video_id=${encodeURIComponent(videoId)}`, { signal: controller.signal });
+                        let payload = null;
+                        try {
+                            payload = await response.json();
+                        } catch (parseError) {
+                            payload = null;
                         }
-                        if (!payload.length) {
+
+                        if (!response.ok) {
+                            const detail = payload && payload.detail ? payload.detail : 'Unable to load matches.';
+                            throw new Error(detail);
+                        }
+
+                        if (!payload || !payload.length) {
                             matchContainer.innerHTML = '<div class=\"muted\">No matching videos found.</div>';
                         } else {
                             const list = document.createElement('ul');
@@ -103,10 +120,12 @@ async def upload_page() -> HTMLResponse:
                             matchContainer.appendChild(list);
                         }
                     } catch (error) {
-                        matchContainer.innerHTML = `<div class=\"muted\">${error.message || 'Unable to load matches.'}</div>`;
+                        const message = error.name === 'AbortError' ? 'The request timed out. Please try again.' : (error.message || 'Unable to load matches.');
+                        matchContainer.innerHTML = `<div class=\"muted\">${message}</div>`;
                     } finally {
+                        window.clearTimeout(timeoutId);
                         button.disabled = false;
-                        button.textContent = 'Find Matches';
+                        button.innerHTML = 'Find Matches';
                     }
                 }
 
