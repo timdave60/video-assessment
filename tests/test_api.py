@@ -37,6 +37,8 @@ def test_upload_page_renders_browser_form() -> None:
     assert "multipart/form-data" in response.text
     assert "/upload" in response.text
     assert "Find Matches" in response.text
+    assert "Uploaded Videos" in response.text
+    assert "Delete" in response.text
 
 
 def test_match_returns_cross_bucket_matches_for_same_content_family() -> None:

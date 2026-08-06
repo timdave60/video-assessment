@@ -47,12 +47,26 @@ async def upload_page() -> HTMLResponse:
                 <button type=\"submit\">Upload Videos</button>
             </form>
             <div id=\"status\" class=\"muted\"></div>
+            <h2>Uploaded Videos</h2>
             <div id=\"results\"></div>
             <script>
                 const form = document.getElementById('upload-form');
                 const fileInput = document.getElementById('file-input');
                 const status = document.getElementById('status');
                 const results = document.getElementById('results');
+
+                async function loadVideos() {
+                    try {
+                        const response = await fetch('/videos');
+                        const payload = await response.json();
+                        if (!response.ok) {
+                            throw new Error(payload.detail || 'Unable to load videos.');
+                        }
+                        renderUploadedVideos(payload);
+                    } catch (error) {
+                        results.innerHTML = `<div class="muted">${error.message || 'Unable to load videos.'}</div>`;
+                    }
+                }
 
                 form.addEventListener('submit', async (event) => {
                     event.preventDefault();
@@ -73,12 +87,36 @@ async def upload_page() -> HTMLResponse:
                             throw new Error(payload.detail || 'Upload failed.');
                         }
 
-                        renderUploadedVideos(payload);
+                        await loadVideos();
                         status.textContent = `Uploaded ${payload.length} video${payload.length === 1 ? '' : 's'} successfully.`;
                     } catch (error) {
                         status.textContent = error.message || 'Upload failed.';
                     }
                 });
+
+                async function deleteVideo(videoId, button) {
+                    const card = button.closest('.card');
+                    if (!card) {
+                        return;
+                    }
+
+                    button.disabled = true;
+                    button.textContent = 'Deleting...';
+
+                    try {
+                        const response = await fetch(`/videos/${encodeURIComponent(videoId)}`, { method: 'DELETE' });
+                        const payload = await response.json();
+                        if (!response.ok) {
+                            throw new Error(payload.detail || 'Delete failed.');
+                        }
+                        card.remove();
+                        status.textContent = `Deleted video ${videoId}.`;
+                    } catch (error) {
+                        status.textContent = error.message || 'Delete failed.';
+                        button.disabled = false;
+                        button.textContent = 'Delete';
+                    }
+                }
 
                 async function findMatches(videoId, button) {
                     const card = button.closest('.card');
@@ -130,6 +168,11 @@ async def upload_page() -> HTMLResponse:
                 }
 
                 function renderUploadedVideos(videos) {
+                    if (!Array.isArray(videos) || !videos.length) {
+                        results.innerHTML = '<div class="muted">No videos uploaded yet.</div>';
+                        return;
+                    }
+
                     const wrapper = document.createElement('div');
                     wrapper.className = 'grid';
                     videos.forEach((video) => {
@@ -140,18 +183,23 @@ async def upload_page() -> HTMLResponse:
                             <div class=\"muted\">Video ID: ${video.video_id}</div>
                             <div class=\"muted\">Width: ${video.width} · Height: ${video.height}</div>
                             <div class=\"muted\">Aspect Ratio: ${video.aspect_ratio} · Bucket: ${video.ratio_bucket}</div>
-                            <div style=\"margin-top: 12px;\">
+                            <div style=\"margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;\">
                                 <button type=\"button\" class=\"find-matches\">Find Matches</button>
+                                <button type=\"button\" class=\"delete-video\">Delete</button>
                             </div>
                             <div class=\"match-results\"></div>
                         `;
                         const button = card.querySelector('.find-matches');
+                        const deleteButton = card.querySelector('.delete-video');
                         button.addEventListener('click', () => findMatches(video.video_id, button));
+                        deleteButton.addEventListener('click', () => deleteVideo(video.video_id, deleteButton));
                         wrapper.appendChild(card);
                     });
                     results.innerHTML = '';
                     results.appendChild(wrapper);
                 }
+
+                loadVideos();
             </script>
         </body>
         </html>
