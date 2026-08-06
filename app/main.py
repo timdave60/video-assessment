@@ -44,7 +44,6 @@ async def root(request: Request):
                         <p>Upload videos, browse your library, and inspect same-content matches in a polished browser flow.</p>
                         <div class="cta-row">
                             <a class="btn btn-primary" href="/upload-page">Open the demo</a>
-                            <a class="btn btn-secondary" href="/videos">Browse the API</a>
                         </div>
                     </section>
                     <section class="panel">
