@@ -31,13 +31,21 @@ def test_root_path_returns_welcome_payload() -> None:
     assert response.json()["status"] == "ok"
 
 
+def test_root_serves_html_for_browser_requests() -> None:
+    response = client.get("/", headers={"accept": "text/html"})
+    assert response.status_code == 200
+    assert "Video Matching Demo" in response.text
+    assert "/upload-page" in response.text
+
+
 def test_upload_page_renders_browser_form() -> None:
     response = client.get("/upload-page")
     assert response.status_code == 200
     assert "multipart/form-data" in response.text
     assert "/upload" in response.text
     assert "Find Matches" in response.text
-    assert "Uploaded Videos" in response.text
+    assert "Upload Video" in response.text
+    assert "Video Library" in response.text
     assert "Delete" in response.text
 
 
