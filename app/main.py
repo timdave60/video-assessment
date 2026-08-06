@@ -112,7 +112,6 @@ async def upload_page() -> HTMLResponse:
                         <input id="file-input" type="file" name="files" multiple required>
                         <button type="submit">Upload Video</button>
                     </form>
-                    <p class="muted">The browser upload uses multipart/form-data and sends files to the existing /upload endpoint.</p>
                     <div id="status" class="status"></div>
                 </section>
 
