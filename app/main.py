@@ -85,7 +85,7 @@ async def upload_page() -> HTMLResponse:
                 .panel-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
                 .panel-header h2 { margin: 0; }
                 .filter-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-                .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+                .grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
                 .card { border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px; background: #fafafa; }
                 .card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
                 .pill { display: inline-flex; align-items: center; padding: 4px 8px; border-radius: 999px; background: #dbeafe; color: #1d4ed8; font-size: 12px; font-weight: 700; }
@@ -182,6 +182,7 @@ async def upload_page() -> HTMLResponse:
                         }
 
                         await loadVideos();
+                        form.reset();
                         status.textContent = `Uploaded ${payload.length} video${payload.length === 1 ? '' : 's'} successfully.`;
                     } catch (error) {
                         status.textContent = error.message || 'Upload failed.';

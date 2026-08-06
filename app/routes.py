@@ -124,7 +124,8 @@ async def upload_videos(files: List[UploadFile] = File(...)) -> List[UploadedVid
 @router.get("/videos", response_model=List[UploadedVideoResult])
 async def list_videos(ratio: Optional[str] = Query(default=None)) -> List[UploadedVideoResult]:
     """Return all uploaded videos, optionally filtered by a canonical ratio bucket."""
-    if ratio is not None and ratio not in SUPPORTED_RATIO_BUCKETS:
+    allowed_ratios = set(SUPPORTED_RATIO_BUCKETS) | {"Other"}
+    if ratio is not None and ratio not in allowed_ratios:
         raise HTTPException(status_code=400, detail="Invalid ratio filter")
 
     records = store.list()
